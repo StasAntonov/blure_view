@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="BlurryBackgroundView">
+        <attr name="startColorGradient" format="reference"/>
+        <attr name="backgroundColorOverlay" format="reference"/>
+        <attr name="cornerRadiusView" format="float"/>
+        <attr name="strokeWidthGradient" format="float"/>
+        <attr name="overlayAlpha" format="integer"/>
+    </declare-styleable>
+</resources>
