@@ -3,6 +3,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="gray">#DADADA</color>
-    <color name="gray_white">#EDEDED</color>
+    <color name="gray_white">#1AE01A1A</color>
     <color name="secondary_text">#BCBCBC</color>
 </resources>

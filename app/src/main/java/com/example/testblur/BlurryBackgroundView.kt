@@ -11,20 +11,21 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.drawable.BitmapDrawable
-import android.renderscript.Allocation
-import android.renderscript.Element
-import android.renderscript.RenderScript
-import android.renderscript.ScriptIntrinsicBlur
 import android.util.AttributeSet
-import android.view.View
 import androidx.annotation.ColorRes
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import jp.wasabeef.glide.transformations.internal.FastBlur
+import jp.wasabeef.glide.transformations.internal.RSBlur
+import java.lang.Exception
+
+const val BLUR_RADIUS = 125
 
 class BlurryBackgroundView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr) {
+) : ConstraintLayout(context, attrs, defStyleAttr) {
 
     private var backgroundImage: Bitmap? = null
     private var radius = 50f // TODO improve dp
@@ -42,8 +43,6 @@ class BlurryBackgroundView @JvmOverloads constructor(
 
     @ColorRes
     private var overlayColor: Int = R.color.gray_white
-
-    private var overlayAlpha = 255
 
     private val overlayRect by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
 
@@ -64,8 +63,7 @@ class BlurryBackgroundView @JvmOverloads constructor(
     init {
         context.obtainStyledAttributes(attrs,R.styleable.BlurryBackgroundView,defStyleAttr,0).let {
             radius = it.getFloat(R.styleable.BlurryBackgroundView_cornerRadiusView,radius)
-            overlayAlpha = it.getInt(R.styleable.BlurryBackgroundView_overlayAlpha,overlayAlpha)
-            overlayColor = it.getColor(R.styleable.BlurryBackgroundView_backgroundColorOverlay,overlayColor)
+            overlayColor = it.getResourceId(R.styleable.BlurryBackgroundView_backgroundColorOverlay,overlayColor)
             startColor = it.getResourceId(R.styleable.BlurryBackgroundView_startColorGradient,startColor)
             strokeWidthGradientLine = it.getFloat(R.styleable.BlurryBackgroundView_strokeWidthGradient,strokeWidthGradientLine)
             it.recycle()
@@ -89,29 +87,41 @@ class BlurryBackgroundView @JvmOverloads constructor(
 
         val croppedBitmap = Bitmap.createBitmap(screenshot, viewX, viewY, width, height)
 
-        backgroundImage = applyBlur(croppedBitmap)
+        val bitmap = applyBlur(croppedBitmap)
+        Canvas(bitmap).apply {
+            drawColor(ContextCompat.getColor(context, overlayColor))
+        }
+//        backgroundImage = applyBlur(croppedBitmap)
 
-        backgroundImage = createRoundedBitmap(backgroundImage)
+        backgroundImage = createRoundedBitmap(bitmap)
 
-        invalidate()
-    }
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-
-        backgroundImage?.let {
-            canvas.drawBitmap(it, 0f, 0f, null)
+        backgroundImage.let {
+            background = BitmapDrawable(resources, it)
         }
 
-        createColorBackground(canvas)
+//        createColorBackground(canvas)
 
-        createGradientLine()
-
-        canvas.drawRoundRect(roundedRect, radius, radius, paint)
+//        createGradientLine()
+//
+//        canvas.drawRoundRect(roundedRect, radius, radius, paint)
     }
 
+//    override fun onDraw(canvas: Canvas) {
+//        super.onDraw(canvas)
+//
+//        backgroundImage?.let {
+//            canvas.drawBitmap(it, 0f, 0f, null)
+//        }
+//
+//        createColorBackground(canvas)
+//
+//        createGradientLine()
+//
+//        canvas.drawRoundRect(roundedRect, radius, radius, paint)
+//    }
+
     private fun createColorBackground(canvas:Canvas){
-        overlayPaint.color = Color.argb(overlayAlpha, Color.red(overlayColor), Color.green(overlayColor), Color.blue(overlayColor))
+        overlayPaint.color = ContextCompat.getColor(context, overlayColor)
         canvas.drawRoundRect(overlayRect, radius, radius, overlayPaint)
     }
 
@@ -122,21 +132,11 @@ class BlurryBackgroundView @JvmOverloads constructor(
     }
 
     private fun applyBlur(sourceBitmap: Bitmap): Bitmap {
-        val blurredBitmap = Bitmap.createBitmap(sourceBitmap.width, sourceBitmap.height, Bitmap.Config.ARGB_8888)
-
-        val renderScript = RenderScript.create(context)
-        val blurInput = Allocation.createFromBitmap(renderScript, sourceBitmap)
-        val blurOutput = Allocation.createFromBitmap(renderScript, blurredBitmap)
-
-        val blur = ScriptIntrinsicBlur.create(renderScript, Element.U8_4(renderScript))
-        blur.setInput(blurInput)
-        blur.setRadius(25f) // max 25f
-        blur.forEach(blurOutput)
-
-        blurOutput.copyTo(blurredBitmap)
-        renderScript.destroy()
-
-        return blurredBitmap
+        return try {
+            RSBlur.blur(context, sourceBitmap, BLUR_RADIUS)
+        } catch (e: Exception) {
+            FastBlur.blur(sourceBitmap, BLUR_RADIUS, true)
+        }
     }
 
     private fun createRoundedBitmap(sourceBitmap: Bitmap?): Bitmap? {

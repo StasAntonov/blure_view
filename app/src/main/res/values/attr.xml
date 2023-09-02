@@ -5,6 +5,5 @@
         <attr name="backgroundColorOverlay" format="reference"/>
         <attr name="cornerRadiusView" format="float"/>
         <attr name="strokeWidthGradient" format="float"/>
-        <attr name="overlayAlpha" format="integer"/>
     </declare-styleable>
 </resources>

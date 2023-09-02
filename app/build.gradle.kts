@@ -45,8 +45,10 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
+    implementation ("com.github.Dimezis:BlurView:version-2.0.3")
 //    implementation ("org.opencv:opencv-android:4.4.4")
 
+    implementation("jp.wasabeef:glide-transformations:4.3.0")
     implementation ("com.github.bumptech.glide:glide:4.12.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
 
